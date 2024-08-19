@@ -15,8 +15,20 @@ import (
 
 var sessions = make(map[string]time.Time)
 
+func checkSession(sessionID string) bool {
+	lastActivity, exists := sessions[sessionID]
+	if !exists || time.Since(lastActivity) > time.Minute {
+		if exists {
+			delete(sessions, sessionID)
+		}
+		return false
+	}
+	sessions[sessionID] = time.Now()
+	return true
+}
+
 func main() {
-	dsn := "egiwira:12345@tcp(127.0.0.1:3306)/testuser?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := "egiwira:12345@tcp(127.0.0.1:3306)/testsiank?charset=utf8mb4&parseTime=True&loc=Local"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("DB connection error:", err)
@@ -48,9 +60,19 @@ func main() {
 		return
 	}
 
+	// Simpan session dengan waktu kedaluwarsa
+	sessionID := user.Username
+	sessions[sessionID] = time.Now()
+
 	fmt.Println("Login berhasil, selamat datang", user.Username)
 
 	for {
+		// Periksa apakah sesi masih valid
+		if !checkSession(sessionID) {
+			fmt.Println("Sesi anda telah habis, silahkan login kembali")
+			return
+		}
+
 		fmt.Println("\nMenu:")
 		fmt.Println("1. Lihat tabel user")
 		fmt.Println("2. Buat user baru")
