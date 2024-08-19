@@ -15,18 +15,6 @@ import (
 
 var sessions = make(map[string]time.Time)
 
-func checkSession(sessionID string) bool {
-	lastActivity, exists := sessions[sessionID]
-	if !exists || time.Since(lastActivity) > time.Minute {
-		if exists {
-			delete(sessions, sessionID)
-		}
-		return false
-	}
-	sessions[sessionID] = time.Now()
-	return true
-}
-
 func main() {
 	dsn := "egiwira:12345@tcp(127.0.0.1:3306)/testsiank?charset=utf8mb4&parseTime=True&loc=Local"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
@@ -60,17 +48,17 @@ func main() {
 		return
 	}
 
-	// Simpan session dengan waktu kedaluwarsa
-	sessionID := user.Username
-	sessions[sessionID] = time.Now()
+	// Set waktu login sebagai waktu aktivitas terakhir
+	sessions[user.Username] = time.Now()
 
 	fmt.Println("Login berhasil, selamat datang", user.Username)
 
 	for {
-		// Periksa apakah sesi masih valid
-		if !checkSession(sessionID) {
-			fmt.Println("Sesi anda telah habis, silahkan login kembali")
-			return
+		// Cek apakah sudah 1 menit sejak aktivitas terakhir
+		lastActivity := sessions[user.Username]
+		if time.Since(lastActivity) > time.Minute {
+			fmt.Println("Sesi Anda telah berakhir karena tidak ada aktivitas selama 1 menit.")
+			break
 		}
 
 		fmt.Println("\nMenu:")
@@ -83,6 +71,9 @@ func main() {
 		var choice int
 		fmt.Print("Pilih menu: ")
 		fmt.Scanln(&choice)
+
+		// Perbarui waktu aktivitas terakhir
+		sessions[user.Username] = time.Now()
 
 		switch choice {
 		case 1:
@@ -114,9 +105,17 @@ func main() {
 
 		case 3:
 			var id string
-			var updateUser models.User
 			fmt.Print("Masukkan ID user yang ingin diupdate: ")
 			fmt.Scanln(&id)
+
+			// Check if user exists
+			_, err := userService.GetUserByID(id)
+			if err != nil {
+				fmt.Println("Error: id tidak ditemukan")
+				break
+			}
+
+			var updateUser models.User
 			fmt.Print("Masukkan nama lengkap baru: ")
 			fmt.Scanln(&updateUser.FullName)
 			fmt.Print("Masukkan username baru: ")
@@ -127,7 +126,7 @@ func main() {
 			fmt.Scanln(&updateUser.Email)
 			idUint, _ := strconv.ParseUint(id, 10, 32)
 			updateUser.ID = uint(idUint)
-			err := userService.UpdateUser(updateUser)
+			err = userService.UpdateUser(updateUser)
 			if err != nil {
 				fmt.Println("Error:", err)
 			} else {

@@ -1,6 +1,8 @@
 package services
 
 import (
+	"errors"
+	"strconv"
 	"tugaspagik/models"
 	"tugaspagik/repositories"
 )
@@ -32,9 +34,16 @@ func (s *userService) GetAllUsers() ([]models.User, error) {
 
 func (s *userService) GetUserByID(id string) (models.User, error) {
 	var user models.User
-	err := s.repo.FindByID(id, &user) // Menyediakan variabel untuk menampung hasil
+
+	// Convert id from string to uint
+	userID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
-		return user, err
+		return user, errors.New("Invalid user ID")
+	}
+
+	err = s.repo.FindByID(uint(userID), &user)
+	if err != nil {
+		return user, errors.New("id tidak ditemukan")
 	}
 	return user, nil
 }
@@ -44,6 +53,14 @@ func (s *userService) CreateUser(user models.User) error {
 }
 
 func (s *userService) UpdateUser(user models.User) error {
+	var existingUser models.User
+
+	err := s.repo.FindByID(user.ID, &existingUser)
+	if err != nil {
+		return errors.New("id tidak ditemukan")
+	}
+
+	// Lakukan update jika pengguna ditemukan
 	return s.repo.Update(user)
 }
 

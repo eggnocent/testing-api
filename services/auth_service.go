@@ -20,7 +20,7 @@ func NewAuthService(repo repositories.UserRepository) AuthService {
 
 func (s *authService) Authenticate(username, password string) (models.User, error) {
 	var user models.User
-	err := s.repo.FindByID(username, &user) // Menyediakan variabel untuk menampung hasil
+	err := s.repo.FindByUsername(username, &user) // Menggunakan FindByUsername
 	if err != nil {
 		return user, err
 	}

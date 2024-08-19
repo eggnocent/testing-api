@@ -63,11 +63,6 @@ func (c *userController) CreateUser(ctx *gin.Context) {
 
 func (c *userController) UpdateUser(ctx *gin.Context) {
 	id := ctx.Param("id")
-	var user models.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 
 	// Convert id from string to uint
 	userID, err := strconv.ParseUint(id, 10, 32)
@@ -76,11 +71,27 @@ func (c *userController) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
+	// Check if the user exists before proceeding
+	_, err = c.service.GetUserByID(id) // We only need to check if the user exists
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "id tidak ditemukan"})
+		return
+	}
+
+	var user models.User
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Assign the validated ID to the user
 	user.ID = uint(userID)
+
 	if err := c.service.UpdateUser(user); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, gin.H{"message": "User updated"})
 }
 
