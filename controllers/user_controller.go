@@ -50,6 +50,10 @@ func (c *userController) CreateUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if user.FullName == "" || user.Username == "" || user.Password == "" || user.Email == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "All fields are required"})
+		return
+	}
 	if err := c.service.CreateUser(user); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

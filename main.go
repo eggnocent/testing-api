@@ -75,25 +75,34 @@ func main() {
 			}
 		case 2:
 			var newUser models.User
+			fmt.Print("Masukkan nama lengkap: ")
+			fmt.Scanln(&newUser.FullName)
 			fmt.Print("Masukkan username baru: ")
 			fmt.Scanln(&newUser.Username)
 			fmt.Print("Masukkan password baru: ")
 			fmt.Scanln(&newUser.Password)
+			fmt.Print("Masukkan email: ")
+			fmt.Scanln(&newUser.Email)
 			err := userService.CreateUser(newUser)
 			if err != nil {
 				fmt.Println("Error:", err)
 			} else {
 				fmt.Println("User berhasil dibuat")
 			}
+
 		case 3:
 			var id string
 			var updateUser models.User
 			fmt.Print("Masukkan ID user yang ingin diupdate: ")
 			fmt.Scanln(&id)
+			fmt.Print("Masukkan nama lengkap baru: ")
+			fmt.Scanln(&updateUser.FullName)
 			fmt.Print("Masukkan username baru: ")
 			fmt.Scanln(&updateUser.Username)
 			fmt.Print("Masukkan password baru: ")
 			fmt.Scanln(&updateUser.Password)
+			fmt.Print("Masukkan email baru: ")
+			fmt.Scanln(&updateUser.Email)
 			idUint, _ := strconv.ParseUint(id, 10, 32)
 			updateUser.ID = uint(idUint)
 			err := userService.UpdateUser(updateUser)
@@ -102,6 +111,7 @@ func main() {
 			} else {
 				fmt.Println("User berhasil diupdate")
 			}
+
 		case 4:
 			var id string
 			fmt.Print("Masukkan ID user yang ingin dihapus: ")
