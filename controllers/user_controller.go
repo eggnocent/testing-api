@@ -14,7 +14,7 @@ type UserController interface {
 	GetUserByID(ctx *gin.Context)
 	CreateUser(ctx *gin.Context)
 	UpdateUser(ctx *gin.Context)
-	DeleteUser(ctx *gin.Context)
+	//DeleteUser(ctx *gin.Context)
 }
 
 type userController struct {
@@ -95,19 +95,19 @@ func (c *userController) UpdateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "User updated"})
 }
 
-func (c *userController) DeleteUser(ctx *gin.Context) {
-	id := ctx.Param("id")
+// func (c *userController) DeleteUser(ctx *gin.Context) {
+// 	id := ctx.Param("id")
 
-	// Convert id from string to uint
-	userID, err := strconv.ParseUint(id, 10, 32)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-		return
-	}
+// 	// Convert id from string to uint
+// 	userID, err := strconv.ParseUint(id, 10, 32)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+// 		return
+// 	}
 
-	if err := c.service.DeleteUser(uint(userID)); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	ctx.JSON(http.StatusOK, gin.H{"message": "User deleted"})
-}
+// 	if err := c.service.DeleteUser(uint(userID)); err != nil {
+// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+// 	ctx.JSON(http.StatusOK, gin.H{"message": "User deleted"})
+// }
