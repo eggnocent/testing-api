@@ -1,10 +1,14 @@
 package services
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
+	"time"
 	"tugaspagik/models"
 	"tugaspagik/repositories"
+
+	"github.com/go-redis/redis"
 )
 
 type UserService interface {
@@ -12,23 +16,39 @@ type UserService interface {
 	GetUserByID(id string) (models.User, error)
 	CreateUser(user models.User) error
 	UpdateUser(user models.User) error
-	DeleteUser(id uint) error
 }
 
 type userService struct {
 	repo repositories.UserRepository
+	rdb  *redis.Client
 }
 
-func NewUserService(repo repositories.UserRepository) UserService {
-	return &userService{repo}
+func NewUserService(repo repositories.UserRepository, rdb *redis.Client) UserService {
+	return &userService{repo, rdb}
 }
 
 func (s *userService) GetAllUsers() ([]models.User, error) {
-	users := []models.User{}
-	err := s.repo.FindAll(&users)
-	if err != nil {
+	var users []models.User
+
+	// Cek apakah data ada di cache Redis
+	cachedUsers, err := s.rdb.Get("all_users").Result()
+	if err == redis.Nil { // Jika tidak ada di cache
+		// Ambil dari database
+		err := s.repo.FindAll(&users)
+		if err != nil {
+			return nil, err
+		}
+
+		// Simpan hasil ke Redis sebagai JSON
+		userJSON, _ := json.Marshal(users)
+		s.rdb.Set("all_users", userJSON, 10*time.Minute) // Cache selama 10 menit
+		return users, nil
+	} else if err != nil {
 		return nil, err
 	}
+
+	// Jika ada di cache, ambil dari cache
+	json.Unmarshal([]byte(cachedUsers), &users)
 	return users, nil
 }
 
@@ -62,8 +82,4 @@ func (s *userService) UpdateUser(user models.User) error {
 
 	// Lakukan update jika pengguna ditemukan
 	return s.repo.Update(user)
-}
-
-func (s *userService) DeleteUser(id uint) error {
-	return s.repo.Delete(id)
 }
